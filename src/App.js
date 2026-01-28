@@ -1,7 +1,7 @@
 import logo from "./logo.svg";
 import "bulma/css/bulma.min.css";
 import "./App.css";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import web3 from "web3";
 import detectEthereumProvider from "@metamask/detect-provider";
 import { loadContract } from "./utils/load-contract";
@@ -79,16 +79,13 @@ function App() {
     loadBalance();
   }, [web3Api]);
 
-  const addFunds = async () => {
+  const addFunds = useCallback(async () => {
     const { contract, web3 } = web3Api;
     await contract.methods.addFunds().send({
       from: accounts[0],
       value: web3.utils.toWei("1", "ether"), // 1 ETH
     });
-
-    const balanceWei = await web3.eth.getBalance(contract._address);
-    setBalance(web3.utils.fromWei(balanceWei, "ether"));
-  };
+  }, [web3Api, accounts[0]]);
 
   return (
     <>
