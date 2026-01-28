@@ -7,7 +7,7 @@ export const loadContract = async (name, provider) => {
 
   const contract = new web3.eth.Contract(
     Artifact.abi,
-    "0xD1d34b708cBa9e9E1105247d733e48419E531336",
+    "0x7Db4C3ca312e808c7Eed82879b1B537A6494D9E4",
   );
 
   contract.setProvider(provider);

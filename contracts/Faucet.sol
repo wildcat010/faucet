@@ -14,9 +14,21 @@ contract Faucet{
         manager = msg.sender;
     }
 
+     modifier limitWithdraw(uint withdrawAmount) {
+    require(
+      withdrawAmount <= 100000000000000000,
+      "Cannot withdraw more than 0.1 ether"
+    );
+    _;
+  }
+
     receive() external payable {
         
     }
+
+    function withdraw(uint withdrawAmount) external limitWithdraw(withdrawAmount) {
+    payable(msg.sender).transfer(withdrawAmount);
+  }
 
     function addFunds() external payable {
     address funder = msg.sender;

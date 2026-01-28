@@ -20,7 +20,9 @@ function App() {
       return (
         <div className="accounts">
           {accounts.map((element, index) => (
-            <p key={index}>{element}</p>
+            <p key={index}>
+              {element.address} - [{element.balance}] ETH
+            </p>
           ))}
         </div>
       );
@@ -57,24 +59,37 @@ function App() {
     loadProvider();
   }, []);
 
+  const getAccounts = async () => {
+    if (web3Api.web3) {
+      const accounts = await web3Api.web3.eth.getAccounts();
+
+      const accountsWithBalance = await Promise.all(
+        accounts.map(async (address) => {
+          const balanceWei = await web3Api.web3.eth.getBalance(address);
+          const balanceEth = web3Api.web3.utils.fromWei(balanceWei, "ether");
+
+          return {
+            address,
+            balance: balanceEth,
+          };
+        }),
+      );
+
+      setAccounts(accountsWithBalance);
+    }
+  };
+
+  const loadBalance = async () => {
+    const { contract, web3 } = web3Api;
+
+    if (contract && web3) {
+      const balance = await web3.eth.getBalance(contract._address);
+      const eth = web3.utils.fromWei(balance, "ether");
+      setBalance(eth);
+    }
+  };
+
   useEffect(() => {
-    const getAccounts = async () => {
-      if (web3Api.web3) {
-        const accounts = await web3Api.web3.eth.getAccounts();
-        setAccounts(accounts);
-      }
-    };
-
-    const loadBalance = async () => {
-      const { contract, web3 } = web3Api;
-
-      if (contract && web3) {
-        const balance = await web3.eth.getBalance(contract._address);
-        const eth = web3.utils.fromWei(balance, "ether");
-        setBalance(eth);
-      }
-    };
-
     getAccounts();
     loadBalance();
   }, [web3Api]);
@@ -82,10 +97,23 @@ function App() {
   const addFunds = useCallback(async () => {
     const { contract, web3 } = web3Api;
     await contract.methods.addFunds().send({
-      from: accounts[0],
+      from: accounts[0].address,
       value: web3.utils.toWei("1", "ether"), // 1 ETH
     });
-  }, [web3Api, accounts[0]]);
+
+    await getAccounts();
+    await loadBalance();
+  }, [web3Api, accounts]);
+
+  const withdraw = useCallback(async () => {
+    const { contract, web3 } = web3Api;
+    await contract.methods.withdraw(web3.utils.toWei("0.1", "ether")).send({
+      from: accounts[0].address,
+    });
+
+    await getAccounts();
+    await loadBalance();
+  }, [web3Api, accounts]);
 
   return (
     <>
@@ -99,7 +127,9 @@ function App() {
             <button className="button mr-2" onClick={addFunds}>
               Donate
             </button>
-            <button className="button">Withdraw</button>
+            <button className="button" onClick={withdraw}>
+              Withdraw
+            </button>
             <div className="faucet-accounts">{displayAccounts()}</div>
           </div>
         </div>
